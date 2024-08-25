@@ -112,6 +112,19 @@ func setupIpRule(svrIp string, routingTable, routingPriority int) error {
 	ipRule.Dst = dst
 	ipRule.Invert = true
 
+	rules, err := netlink.RuleList(0)
+	if err != nil {
+		return fmt.Errorf("failed to get list of rules: %w", err)
+	}
+
+	
+	for _, r  := range rules {
+		if ipRule.Table == r.Table {
+			logging.Info.Printf("ip rule 'from all not to %v via table %v' already exists\n", ipRule.Dst, ipRule.Table)
+			return nil
+		}	
+	}
+
 	if err := netlink.RuleAdd(ipRule); err != nil {
 		return fmt.Errorf("failed to add IP rule (table %v, dst %v): %w", ipRule.Table, ipRule.Dst, err)
 	}
